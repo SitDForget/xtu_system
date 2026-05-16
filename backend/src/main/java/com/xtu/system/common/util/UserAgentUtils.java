@@ -9,7 +9,6 @@ public final class UserAgentUtils {
         if (userAgent == null || userAgent.isBlank()) {
             return "Unknown";
         }
-
         String normalized = userAgent.toLowerCase();
         if (normalized.contains("edg")) {
             return "Edge";
@@ -23,6 +22,9 @@ public final class UserAgentUtils {
         if (normalized.contains("safari")) {
             return "Safari";
         }
+        if (normalized.contains("msie") || normalized.contains("trident")) {
+            return "Internet Explorer";
+        }
         return "Unknown";
     }
 
@@ -30,7 +32,6 @@ public final class UserAgentUtils {
         if (userAgent == null || userAgent.isBlank()) {
             return "Unknown";
         }
-
         String normalized = userAgent.toLowerCase();
         if (normalized.contains("windows")) {
             return "Windows";

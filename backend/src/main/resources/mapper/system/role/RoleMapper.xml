@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xtu.system.modules.system.role.mapper.RoleMapper">
+
+    <resultMap id="RoleEntityMap" type="com.xtu.system.modules.system.role.entity.RoleEntity">
+        <id column="id" property="id"/>
+        <result column="role_code" property="roleCode"/>
+        <result column="role_name" property="roleName"/>
+        <result column="data_scope" property="dataScope"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <resultMap id="RolePageItemMap" type="com.xtu.system.modules.system.role.vo.RolePageItemVO">
+        <id column="id" property="id"/>
+        <result column="role_code" property="roleCode"/>
+        <result column="role_name" property="roleName"/>
+        <result column="data_scope" property="dataScope"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <resultMap id="RoleDetailMap" type="com.xtu.system.modules.system.role.vo.RoleDetailVO" extends="RolePageItemMap"/>
+
+    <sql id="RoleWhere">
+        deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (role_code LIKE CONCAT('%', #{keyword}, '%') OR role_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </sql>
+
+    <select id="selectRolePage" resultMap="RolePageItemMap">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            data_scope,
+            status,
+            remark
+        FROM sys_role
+        WHERE
+            <include refid="RoleWhere"/>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countRolePage" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_role
+        WHERE
+            <include refid="RoleWhere"/>
+    </select>
+
+    <select id="selectRoleDetailById" resultMap="RoleDetailMap">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            data_scope,
+            status,
+            remark
+        FROM sys_role
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectRoleEntityById" resultMap="RoleEntityMap">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            data_scope,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_role
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectRoleEntityByCode" resultMap="RoleEntityMap">
+        SELECT
+            id,
+            role_code,
+            role_name,
+            data_scope,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_role
+        WHERE role_code = #{roleCode} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insertRole" parameterType="com.xtu.system.modules.system.role.entity.RoleEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_role (
+            role_code,
+            role_name,
+            data_scope,
+            status,
+            remark,
+            created_by,
+            updated_by,
+            deleted,
+            version
+        ) VALUES (
+            #{roleCode},
+            #{roleName},
+            #{dataScope},
+            #{status},
+            #{remark},
+            #{createdBy},
+            #{updatedBy},
+            0,
+            0
+        )
+    </insert>
+
+    <update id="updateRole" parameterType="com.xtu.system.modules.system.role.entity.RoleEntity">
+        UPDATE sys_role
+        SET
+            role_code = #{roleCode},
+            role_name = #{roleName},
+            data_scope = #{dataScope},
+            status = #{status},
+            remark = #{remark},
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="logicDeleteRole">
+        UPDATE sys_role
+        SET
+            deleted = 1,
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="updateRoleStatus">
+        UPDATE sys_role
+        SET
+            status = #{status},
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectRoleOptions" resultType="com.xtu.system.modules.system.role.vo.RoleOptionVO">
+        SELECT
+            id,
+            role_code AS roleCode,
+            role_name AS roleName
+        FROM sys_role
+        WHERE deleted = 0 AND status = 1
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectMenuIdsByRoleId" resultType="long">
+        SELECT menu_id
+        FROM sys_role_menu
+        WHERE role_id = #{roleId}
+        ORDER BY menu_id ASC
+    </select>
+
+    <delete id="deleteRoleMenusByRoleId">
+        DELETE FROM sys_role_menu
+        WHERE role_id = #{roleId}
+    </delete>
+
+    <insert id="insertRoleMenus">
+        INSERT INTO sys_role_menu (
+            role_id,
+            menu_id,
+            created_by,
+            created_at
+        ) VALUES
+        <foreach collection="menuIds" item="menuId" separator=",">
+            (
+                #{roleId},
+                #{menuId},
+                #{operatorId},
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="countUserBindingsByRoleId" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_user_role
+        WHERE role_id = #{roleId}
+    </select>
+</mapper>
