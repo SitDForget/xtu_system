@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xtu.system.modules.dashboard.mapper.DashboardMapper">
+
+    <select id="countUsers" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE deleted = 0
+    </select>
+
+    <select id="countStudents" resultType="long">
+        SELECT COUNT(1)
+        FROM biz_student
+        WHERE deleted = 0
+    </select>
+
+    <select id="countTeachers" resultType="long">
+        SELECT COUNT(1)
+        FROM biz_teacher
+        WHERE deleted = 0
+    </select>
+
+    <select id="countCourses" resultType="long">
+        SELECT COUNT(1)
+        FROM biz_course
+        WHERE deleted = 0
+    </select>
+
+    <select id="countPendingApplications" resultType="long">
+        SELECT COUNT(1)
+        FROM biz_application
+        WHERE deleted = 0 AND status = 0
+    </select>
+
+    <select id="selectTodoList" resultType="com.xtu.system.modules.dashboard.vo.DashboardTodoItemVO">
+        SELECT id, title, type, status, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS createdAt
+        FROM (
+            SELECT
+                CONCAT('application-', a.id) AS id,
+                CONCAT('待审核申请：', a.application_type, ' / ', COALESCE(a.target_name, '未指定对象')) AS title,
+                '审批单' AS type,
+                '待审核' AS status,
+                a.submit_time AS created_at
+            FROM biz_application a
+            WHERE a.deleted = 0
+              AND a.status = 0
+
+            UNION ALL
+
+            SELECT
+                CONCAT('student-', s.id) AS id,
+                CONCAT('学生档案待绑定账号：', s.student_name) AS title,
+                '学生档案' AS type,
+                '待处理' AS status,
+                s.created_at
+            FROM biz_student s
+            WHERE s.deleted = 0
+              AND (s.user_id IS NULL OR s.user_id = 0)
+
+            UNION ALL
+
+            SELECT
+                CONCAT('teacher-', t.id) AS id,
+                CONCAT('教师档案待绑定账号：', t.teacher_name) AS title,
+                '教师档案' AS type,
+                '待处理' AS status,
+                t.created_at
+            FROM biz_teacher t
+            WHERE t.deleted = 0
+              AND (t.user_id IS NULL OR t.user_id = 0)
+
+            UNION ALL
+
+            SELECT
+                CONCAT('user-', u.id) AS id,
+                CONCAT('用户待分配角色：', u.real_name) AS title,
+                '用户账号' AS type,
+                '待处理' AS status,
+                u.created_at
+            FROM sys_user u
+            WHERE u.deleted = 0
+              AND NOT EXISTS (
+                SELECT 1
+                FROM sys_user_role ur
+                WHERE ur.user_id = u.id
+              )
+        ) pending_list
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectDepartmentDistribution" resultType="com.xtu.system.modules.dashboard.vo.DashboardDepartmentStatVO">
+        SELECT
+            d.dept_name AS name,
+            (
+                COALESCE(u.user_count, 0)
+                + COALESCE(s.student_count, 0)
+                + COALESCE(t.teacher_count, 0)
+            ) AS value
+        FROM sys_department d
+        LEFT JOIN (
+            SELECT dept_id, COUNT(1) AS user_count
+            FROM sys_user
+            WHERE deleted = 0
+            GROUP BY dept_id
+        ) u ON u.dept_id = d.id
+        LEFT JOIN (
+            SELECT dept_id, COUNT(1) AS student_count
+            FROM biz_student
+            WHERE deleted = 0
+            GROUP BY dept_id
+        ) s ON s.dept_id = d.id
+        LEFT JOIN (
+            SELECT dept_id, COUNT(1) AS teacher_count
+            FROM biz_teacher
+            WHERE deleted = 0
+            GROUP BY dept_id
+        ) t ON t.dept_id = d.id
+        WHERE d.deleted = 0
+          AND (
+            COALESCE(u.user_count, 0)
+            + COALESCE(s.student_count, 0)
+            + COALESCE(t.teacher_count, 0)
+          ) > 0
+        ORDER BY value DESC, d.sort_no ASC, d.id ASC
+    </select>
+
+    <select id="selectRecentActivityTrend" resultType="com.xtu.system.modules.dashboard.vo.DashboardTrendItemVO">
+        SELECT
+            DATE_FORMAT(days.stat_date, '%Y-%m-%d') AS date,
+            COALESCE(stats.application_count, 0) AS count
+        FROM (
+            SELECT CURDATE() - INTERVAL 6 DAY AS stat_date
+            UNION ALL SELECT CURDATE() - INTERVAL 5 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 4 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 3 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 2 DAY
+            UNION ALL SELECT CURDATE() - INTERVAL 1 DAY
+            UNION ALL SELECT CURDATE()
+        ) days
+        LEFT JOIN (
+            SELECT DATE(submit_time) AS submit_date, COUNT(1) AS application_count
+            FROM biz_application
+            WHERE deleted = 0
+              AND submit_time >= CURDATE() - INTERVAL 6 DAY
+            GROUP BY DATE(submit_time)
+        ) stats ON stats.submit_date = days.stat_date
+        ORDER BY days.stat_date ASC
+    </select>
+</mapper>

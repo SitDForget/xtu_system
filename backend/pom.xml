@@ -15,7 +15,7 @@
     <artifactId>xtu-system-backend</artifactId>
     <version>0.1.0</version>
     <name>xtu-system-backend</name>
-    <description>XTU backend login module</description>
+    <description>XTU Integrated Information System Backend</description>
 
     <properties>
         <java.version>17</java.version>

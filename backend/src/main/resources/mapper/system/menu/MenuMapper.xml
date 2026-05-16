@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xtu.system.modules.system.menu.mapper.MenuMapper">
+
+    <resultMap id="MenuEntityMap" type="com.xtu.system.modules.system.menu.entity.MenuEntity">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="menu_name" property="menuName"/>
+        <result column="menu_type" property="menuType"/>
+        <result column="route_path" property="routePath"/>
+        <result column="component_path" property="componentPath"/>
+        <result column="permission_code" property="permissionCode"/>
+        <result column="icon" property="icon"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="visible" property="visible"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <select id="selectAllMenus" resultMap="MenuEntityMap">
+        SELECT
+            id,
+            parent_id,
+            menu_name,
+            menu_type,
+            route_path,
+            component_path,
+            permission_code,
+            icon,
+            sort_no,
+            visible,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_menu
+        WHERE deleted = 0
+        ORDER BY sort_no ASC, id ASC
+    </select>
+
+    <select id="selectMenusByUserId" resultMap="MenuEntityMap">
+        SELECT DISTINCT
+            m.id,
+            m.parent_id,
+            m.menu_name,
+            m.menu_type,
+            m.route_path,
+            m.component_path,
+            m.permission_code,
+            m.icon,
+            m.sort_no,
+            m.visible,
+            m.status,
+            m.remark,
+            m.created_by,
+            m.updated_by
+        FROM sys_menu m
+        INNER JOIN sys_role_menu rm ON rm.menu_id = m.id
+        INNER JOIN sys_user_role ur ON ur.role_id = rm.role_id
+        WHERE ur.user_id = #{userId}
+          AND m.deleted = 0
+          AND m.status = 1
+          AND m.menu_type IN ('M', 'C')
+          AND m.visible = 1
+        ORDER BY m.sort_no ASC, m.id ASC
+    </select>
+
+    <select id="selectPermissionCodesByUserId" resultType="string">
+        SELECT DISTINCT m.permission_code
+        FROM sys_menu m
+        INNER JOIN sys_role_menu rm ON rm.menu_id = m.id
+        INNER JOIN sys_user_role ur ON ur.role_id = rm.role_id
+        WHERE ur.user_id = #{userId}
+          AND m.deleted = 0
+          AND m.status = 1
+          AND m.permission_code IS NOT NULL
+          AND m.permission_code != ''
+        ORDER BY m.permission_code ASC
+    </select>
+
+    <select id="selectMenuById" resultMap="MenuEntityMap">
+        SELECT
+            id,
+            parent_id,
+            menu_name,
+            menu_type,
+            route_path,
+            component_path,
+            permission_code,
+            icon,
+            sort_no,
+            visible,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_menu
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <insert id="insertMenu" parameterType="com.xtu.system.modules.system.menu.entity.MenuEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_menu (
+            parent_id,
+            menu_name,
+            menu_type,
+            route_path,
+            component_path,
+            permission_code,
+            icon,
+            sort_no,
+            visible,
+            status,
+            remark,
+            created_by,
+            updated_by,
+            deleted,
+            version
+        ) VALUES (
+            #{parentId},
+            #{menuName},
+            #{menuType},
+            #{routePath},
+            #{componentPath},
+            #{permissionCode},
+            #{icon},
+            #{sortNo},
+            #{visible},
+            #{status},
+            #{remark},
+            #{createdBy},
+            #{updatedBy},
+            0,
+            0
+        )
+    </insert>
+
+    <update id="updateMenu" parameterType="com.xtu.system.modules.system.menu.entity.MenuEntity">
+        UPDATE sys_menu
+        SET
+            parent_id = #{parentId},
+            menu_name = #{menuName},
+            menu_type = #{menuType},
+            route_path = #{routePath},
+            component_path = #{componentPath},
+            permission_code = #{permissionCode},
+            icon = #{icon},
+            sort_no = #{sortNo},
+            visible = #{visible},
+            status = #{status},
+            remark = #{remark},
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="logicDeleteMenu">
+        UPDATE sys_menu
+        SET
+            deleted = 1,
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="countChildrenByParentId" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_menu
+        WHERE parent_id = #{parentId} AND deleted = 0
+    </select>
+
+    <select id="countRoleBindingsByMenuId" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_role_menu
+        WHERE menu_id = #{menuId}
+    </select>
+</mapper>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xtu.system.modules.file.attachment.mapper.AttachmentMapper">
+
+    <resultMap id="AttachmentEntityMap" type="com.xtu.system.modules.file.attachment.entity.AttachmentEntity">
+        <id column="id" property="id"/>
+        <result column="biz_type" property="bizType"/>
+        <result column="biz_id" property="bizId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_ext" property="fileExt"/>
+        <result column="content_type" property="contentType"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="storage_type" property="storageType"/>
+        <result column="bucket_name" property="bucketName"/>
+        <result column="object_key" property="objectKey"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="uploader_id" property="uploaderId"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <resultMap id="AttachmentVOMap" type="com.xtu.system.modules.file.attachment.vo.AttachmentVO">
+        <id column="id" property="id"/>
+        <result column="biz_type" property="bizType"/>
+        <result column="biz_id" property="bizId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="content_type" property="contentType"/>
+        <result column="file_url" property="fileUrl"/>
+    </resultMap>
+
+    <insert id="insertAttachment" parameterType="com.xtu.system.modules.file.attachment.entity.AttachmentEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO biz_attachment (
+            biz_type,
+            biz_id,
+            file_name,
+            file_ext,
+            content_type,
+            file_size,
+            storage_type,
+            bucket_name,
+            object_key,
+            file_url,
+            uploader_id,
+            created_by,
+            updated_by,
+            deleted,
+            version
+        ) VALUES (
+            #{bizType},
+            #{bizId},
+            #{fileName},
+            #{fileExt},
+            #{contentType},
+            #{fileSize},
+            #{storageType},
+            #{bucketName},
+            #{objectKey},
+            #{fileUrl},
+            #{uploaderId},
+            #{createdBy},
+            #{updatedBy},
+            0,
+            0
+        )
+    </insert>
+
+    <select id="selectAttachments" resultMap="AttachmentVOMap">
+        SELECT
+            id,
+            biz_type,
+            biz_id,
+            file_name,
+            file_size,
+            content_type,
+            file_url
+        FROM biz_attachment
+        WHERE deleted = 0 AND biz_type = #{bizType} AND biz_id = #{bizId}
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectAttachmentEntitiesByBiz" resultMap="AttachmentEntityMap">
+        SELECT
+            id,
+            biz_type,
+            biz_id,
+            file_name,
+            file_ext,
+            content_type,
+            file_size,
+            storage_type,
+            bucket_name,
+            object_key,
+            file_url,
+            uploader_id,
+            created_by,
+            updated_by
+        FROM biz_attachment
+        WHERE deleted = 0 AND biz_type = #{bizType} AND biz_id = #{bizId}
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectAttachmentEntityById" resultMap="AttachmentEntityMap">
+        SELECT
+            id,
+            biz_type,
+            biz_id,
+            file_name,
+            file_ext,
+            content_type,
+            file_size,
+            storage_type,
+            bucket_name,
+            object_key,
+            file_url,
+            uploader_id,
+            created_by,
+            updated_by
+        FROM biz_attachment
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectAttachmentDetailById" resultMap="AttachmentVOMap">
+        SELECT
+            id,
+            biz_type,
+            biz_id,
+            file_name,
+            file_size,
+            content_type,
+            file_url
+        FROM biz_attachment
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="updateAttachmentFileUrl">
+        UPDATE biz_attachment
+        SET
+            file_url = #{fileUrl},
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="logicDeleteAttachment">
+        UPDATE biz_attachment
+        SET
+            deleted = 1,
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="logicDeleteAttachmentsByBiz">
+        UPDATE biz_attachment
+        SET
+            deleted = 1,
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE biz_type = #{bizType} AND biz_id = #{bizId} AND deleted = 0
+    </update>
+</mapper>

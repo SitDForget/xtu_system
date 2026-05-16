@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xtu.system.modules.organization.department.mapper.DepartmentMapper">
+
+    <resultMap id="DepartmentEntityMap" type="com.xtu.system.modules.organization.department.entity.DepartmentEntity">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="dept_type" property="deptType"/>
+        <result column="leader_name" property="leaderName"/>
+        <result column="leader_phone" property="leaderPhone"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <select id="selectAllDepartments" resultMap="DepartmentEntityMap">
+        SELECT
+            id,
+            parent_id,
+            dept_code,
+            dept_name,
+            dept_type,
+            leader_name,
+            leader_phone,
+            sort_no,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_department
+        WHERE deleted = 0
+        ORDER BY sort_no ASC, id ASC
+    </select>
+
+    <select id="selectDepartmentById" resultMap="DepartmentEntityMap">
+        SELECT
+            id,
+            parent_id,
+            dept_code,
+            dept_name,
+            dept_type,
+            leader_name,
+            leader_phone,
+            sort_no,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_department
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectDepartmentByCode" resultMap="DepartmentEntityMap">
+        SELECT
+            id,
+            parent_id,
+            dept_code,
+            dept_name,
+            dept_type,
+            leader_name,
+            leader_phone,
+            sort_no,
+            status,
+            remark,
+            created_by,
+            updated_by
+        FROM sys_department
+        WHERE dept_code = #{deptCode} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insertDepartment" parameterType="com.xtu.system.modules.organization.department.entity.DepartmentEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_department (
+            parent_id,
+            dept_code,
+            dept_name,
+            dept_type,
+            leader_name,
+            leader_phone,
+            sort_no,
+            status,
+            remark,
+            created_by,
+            updated_by,
+            deleted,
+            version
+        ) VALUES (
+            #{parentId},
+            #{deptCode},
+            #{deptName},
+            #{deptType},
+            #{leaderName},
+            #{leaderPhone},
+            #{sortNo},
+            #{status},
+            #{remark},
+            #{createdBy},
+            #{updatedBy},
+            0,
+            0
+        )
+    </insert>
+
+    <update id="updateDepartment" parameterType="com.xtu.system.modules.organization.department.entity.DepartmentEntity">
+        UPDATE sys_department
+        SET
+            parent_id = #{parentId},
+            dept_code = #{deptCode},
+            dept_name = #{deptName},
+            dept_type = #{deptType},
+            leader_name = #{leaderName},
+            leader_phone = #{leaderPhone},
+            sort_no = #{sortNo},
+            status = #{status},
+            remark = #{remark},
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="logicDeleteDepartment">
+        UPDATE sys_department
+        SET
+            deleted = 1,
+            updated_by = #{updatedBy},
+            updated_at = NOW(),
+            version = version + 1
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="countChildrenByParentId" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_department
+        WHERE parent_id = #{parentId} AND deleted = 0
+    </select>
+
+    <select id="countUsersByDeptId" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_user
+        WHERE dept_id = #{deptId} AND deleted = 0
+    </select>
+</mapper>
