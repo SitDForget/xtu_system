@@ -37,7 +37,6 @@ public final class RequestContextUtils {
                 return index >= 0 ? value.substring(0, index).trim() : value.trim();
             }
         }
-
         return request.getRemoteAddr();
     }
 }
