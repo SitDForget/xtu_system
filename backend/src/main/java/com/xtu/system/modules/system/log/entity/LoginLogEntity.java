@@ -1,7 +1,10 @@
 package com.xtu.system.modules.system.log.entity;
 
+import java.time.LocalDateTime;
+
 public class LoginLogEntity {
 
+    private Long id;
     private Long userId;
     private String username;
     private String realName;
@@ -13,6 +16,15 @@ public class LoginLogEntity {
     private String os;
     private Integer loginStatus;
     private String failReason;
+    private LocalDateTime loginAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Long getUserId() {
         return userId;
@@ -100,5 +112,13 @@ public class LoginLogEntity {
 
     public void setFailReason(String failReason) {
         this.failReason = failReason;
+    }
+
+    public LocalDateTime getLoginAt() {
+        return loginAt;
+    }
+
+    public void setLoginAt(LocalDateTime loginAt) {
+        this.loginAt = loginAt;
     }
 }

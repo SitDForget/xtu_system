@@ -4,7 +4,29 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.xtu.system.modules.system.log.mapper.LogMapper">
 
-    <insert id="insertLoginLog" parameterType="com.xtu.system.modules.system.log.entity.LoginLogEntity">
+    <resultMap id="LoginLogMap" type="com.xtu.system.modules.system.log.vo.LoginLogPageItemVO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="real_name" property="realName"/>
+        <result column="login_ip" property="loginIp"/>
+        <result column="browser" property="browser"/>
+        <result column="os" property="os"/>
+        <result column="login_status" property="loginStatus"/>
+        <result column="login_at" property="loginAt"/>
+    </resultMap>
+
+    <resultMap id="OperationLogMap" type="com.xtu.system.modules.system.log.vo.OperationLogPageItemVO">
+        <id column="id" property="id"/>
+        <result column="module_name" property="moduleName"/>
+        <result column="biz_type" property="bizType"/>
+        <result column="operation_type" property="operationType"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="operator_ip" property="operatorIp"/>
+        <result column="result_status" property="resultStatus"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insertLoginLog" parameterType="com.xtu.system.modules.system.log.entity.LoginLogEntity" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO sys_login_log (
             user_id,
             username,
@@ -33,4 +55,118 @@
             NOW()
         )
     </insert>
+
+    <select id="selectLoginLogPage" resultMap="LoginLogMap">
+        SELECT
+            id,
+            username,
+            real_name,
+            login_ip,
+            browser,
+            os,
+            login_status,
+            login_at
+        FROM sys_login_log
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (username LIKE CONCAT('%', #{keyword}, '%') OR real_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="loginStatus != null">
+            AND login_status = #{loginStatus}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countLoginLogPage" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_login_log
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (username LIKE CONCAT('%', #{keyword}, '%') OR real_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="loginStatus != null">
+            AND login_status = #{loginStatus}
+        </if>
+    </select>
+
+    <insert id="insertOperationLog" parameterType="com.xtu.system.modules.system.log.entity.OperationLogEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_operation_log (
+            module_name,
+            biz_type,
+            biz_id,
+            operation_type,
+            request_uri,
+            request_method,
+            request_params,
+            operator_id,
+            operator_name,
+            operator_ip,
+            result_status,
+            error_message,
+            created_at
+        ) VALUES (
+            #{moduleName},
+            #{bizType},
+            #{bizId},
+            #{operationType},
+            #{requestUri},
+            #{requestMethod},
+            #{requestParams},
+            #{operatorId},
+            #{operatorName},
+            #{operatorIp},
+            #{resultStatus},
+            #{errorMessage},
+            NOW()
+        )
+    </insert>
+
+    <select id="selectOperationLogPage" resultMap="OperationLogMap">
+        SELECT
+            id,
+            module_name,
+            biz_type,
+            operation_type,
+            operator_name,
+            operator_ip,
+            result_status,
+            created_at
+        FROM sys_operation_log
+        WHERE 1 = 1
+        <if test="moduleName != null and moduleName != ''">
+            AND module_name = #{moduleName}
+        </if>
+        <if test="resultStatus != null">
+            AND result_status = #{resultStatus}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                operator_name LIKE CONCAT('%', #{keyword}, '%')
+                OR request_uri LIKE CONCAT('%', #{keyword}, '%')
+                OR biz_type LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countOperationLogPage" resultType="long">
+        SELECT COUNT(1)
+        FROM sys_operation_log
+        WHERE 1 = 1
+        <if test="moduleName != null and moduleName != ''">
+            AND module_name = #{moduleName}
+        </if>
+        <if test="resultStatus != null">
+            AND result_status = #{resultStatus}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                operator_name LIKE CONCAT('%', #{keyword}, '%')
+                OR request_uri LIKE CONCAT('%', #{keyword}, '%')
+                OR biz_type LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
 </mapper>
